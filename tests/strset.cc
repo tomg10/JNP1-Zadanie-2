@@ -16,9 +16,25 @@ const bool debug = true;
 
 namespace
 {
+
+    using std::map;
+    using std::set;
+    using std::string;
+
+    using longToSetMap = map <unsigned long, set <string> >;
+
+    longToSetMap& globalMap() {
+        static longToSetMap* resultMap = new longToSetMap();
+        return *resultMap;
+    }
+
+
+    //std::map<unsigned long, std::set<std::string>> idsToSets;
+    unsigned long firstFreeId = 1;
+
     bool strset_exists(unsigned long id)
     {
-        return idsToSets.find(id) != idsToSets.end();
+        return globalMap().find(id) != globalMap().end();
     }
 
     string createFuncTemplate(const string& name, unsigned long id) {
@@ -41,25 +57,25 @@ namespace jnp1
 {
 extern "C"
 {
-    unsigned long strset_new()
-    {
-        if (debug) {
-            cerr << "strset_new()\n";
-        }
-
-        idsToSets[firstFreeId] = set<std::string>();
-        firstFreeId++;
-
-        if (debug) {
-            cerr << "strset_new: set " << firstFreeId - 1 << " created\n";
-        }
-
-        return firstFreeId - 1;
+unsigned long strset_new()
+{
+    if (debug) {
+        cerr << "strset_new()\n";
     }
+
+    globalMap().insert(std::make_pair(firstFreeId, set <string>()));
+    firstFreeId++;
+
+    if (debug) {
+        cerr << "strset_new: set " << firstFreeId - 1 << " created\n";
+    }
+
+    return firstFreeId - 1;
+}
+
 
 void strset_delete(unsigned long id)
 {
-
     string func = createFuncTemplate("strset_delete", id);
 
     if (debug) {
@@ -75,12 +91,14 @@ void strset_delete(unsigned long id)
             cerr << "strset_delete: tried to delete nonexistent set\n";
         }
     } else {
-        idsToSets.erase(idsToSets.find(id));
+        globalMap().erase(globalMap().find(id));
+
         if (debug) {
             cerr << "strset_delete: set " << id << " removed\n";
         }
     }
 }
+
 
 size_t strset_size(unsigned long id)
 {
@@ -90,7 +108,7 @@ size_t strset_size(unsigned long id)
         cerr << func << "\n";
     }
 
-    size_t result = strset_exists(id) ? idsToSets[id].size() : 0;
+    size_t result = strset_exists(id) ? globalMap()[id].size() : 0;
 
     if (debug) {
         cerr << "strset_size: set " << id << " contains " << result << " element(s)\n";
@@ -99,6 +117,7 @@ size_t strset_size(unsigned long id)
     return result;
 }
 
+
 void strset_insert(unsigned long id, const char *value)
 {
     string func = createFuncTemplate("strset_insert", id, value);
@@ -106,8 +125,9 @@ void strset_insert(unsigned long id, const char *value)
     if (value == nullptr) {
         if (debug) {
             cerr << func << " illegal NULL value\n";
-            return;
         }
+
+        return;
     }
 
     if (debug) {
@@ -117,12 +137,12 @@ void strset_insert(unsigned long id, const char *value)
     string toInsert = string(value);
 
     if (id == strset42() && strset_size(id) == 0) {
-        idsToSets[id].insert(toInsert);
+        globalMap()[id].insert(toInsert);
     } else if (id == strset42() && strset_size(id) != 0) {
         if (debug) {
             cerr << func << " illegal call on const set\n";
-            return;
         }
+        return;
     }
 
     if (!strset_exists(id)) {
@@ -132,13 +152,19 @@ void strset_insert(unsigned long id, const char *value)
 
         return;
     }
+    if (strset_test(id, value) == 1) {
+        if (debug) {
+            cerr << "strset_insert: set " << id << " already contains element " << value << "\n";
+        }
+    } else {
+        globalMap()[id].insert(toInsert);
 
-    idsToSets[id].insert(toInsert);
-
-    if (debug) {
-        cerr << "strset_insert: set " << id << " element " << value << " inserted\n";
+        if (debug) {
+            cerr << "strset_insert: set " << id << " element " << value << " inserted\n";
+        }
     }
 }
+
 
 void strset_remove(unsigned long id, const char *value)
 {
@@ -147,8 +173,8 @@ void strset_remove(unsigned long id, const char *value)
     if (value == nullptr) {
         if (debug) {
             cerr << func << " illegal NULL value\n";
-            return;
         }
+        return;
     }
 
     if (id == strset42()) {
@@ -159,11 +185,11 @@ void strset_remove(unsigned long id, const char *value)
     } else if (!strset_exists(id)) {
         if (debug) {
             cerr << func << " called on nonexistant set\n";
-            return;
         }
+        return;
     }
 
-    idsToSets[id].erase(value);
+    globalMap()[id].erase(value);
 
     if (debug) {
         cerr << "strset_remove: element " << value << " removed from set " << id << "\n";
@@ -171,13 +197,14 @@ void strset_remove(unsigned long id, const char *value)
 
 }
 
+
 int strset_test(unsigned long id, const char *value)
 {
     string func = createFuncTemplate("strset_test", id, value);
 
     if (value == nullptr) {
         if (debug) {
-            cerr << func << " illegal value NULL\n";
+            cerr << func << " illegal NULL value\n";
         }
         return 0;
     }
@@ -186,7 +213,7 @@ int strset_test(unsigned long id, const char *value)
         cerr << func << "\n";
     }
 
-    bool answer = (strset_exists(id) && idsToSets[id].find(value) != idsToSets[id].end());
+    bool answer = (strset_exists(id) && globalMap()[id].find(value) != globalMap()[id].end());
 
     if (debug) {
         std::string phrase = answer ? " contains " : " does not contain ";
@@ -196,6 +223,7 @@ int strset_test(unsigned long id, const char *value)
 
     return answer ? 1 : 0;
 }
+
 
 void strset_clear(unsigned long id)
 {
@@ -217,12 +245,13 @@ void strset_clear(unsigned long id)
         return;
     }
 
-    idsToSets[id].clear();
+    globalMap()[id].clear();
 
     if (debug) {
         cerr << "strset_clear: cleared set " << id << "\n";
     }
 }
+
 
 int strset_comp(unsigned long id1, unsigned long id2)
 {
@@ -245,10 +274,10 @@ int strset_comp(unsigned long id1, unsigned long id2)
         return size1 == 0 ? -1 : 1;
     }
 
-    auto it1 = idsToSets[id1].begin();
-    auto it2 = idsToSets[id2].begin();
-    auto it1End = idsToSets[id1].end();
-    auto it2End = idsToSets[id2].end();
+    auto it1 = globalMap()[id1].begin();
+    auto it2 = globalMap()[id2].begin();
+    auto it1End = globalMap()[id1].end();
+    auto it2End = globalMap()[id2].end();
 
     while (it1 != it1End && it2 != it2End) {
         auto compare = (*it1).compare(*it2);

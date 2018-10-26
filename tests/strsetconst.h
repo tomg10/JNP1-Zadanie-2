@@ -2,10 +2,7 @@
 
 #ifdef __cplusplus
 #include <iostream>
-namespace
-{
-    unsigned long constSetId = 0;
-}
+
 #endif
 #ifdef __cplusplus
 namespace jnp1

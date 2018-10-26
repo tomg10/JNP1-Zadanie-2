@@ -6,11 +6,7 @@
 #include <unordered_map>
 #include <set>
 #include <map>
-namespace
-{
-    std::map<unsigned long, std::set<std::string>> idsToSets;
-    unsigned long firstFreeId = 1;
-}
+
 #include <iostream>
 #endif
 

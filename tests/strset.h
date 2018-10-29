@@ -2,13 +2,11 @@
 
 #ifdef __cplusplus
 #include <cstddef>
+#include <iostream>
 #else
 #include <stddef.h>
 #endif
 
-#ifdef __cplusplus
-#include <iostream>
-#endif
 
 #ifdef __cplusplus
 namespace jnp1

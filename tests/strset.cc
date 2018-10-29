@@ -19,7 +19,6 @@ const bool debug = true;
 
 namespace
 {
-
     using std::map;
     using std::set;
     using std::string;
@@ -30,8 +29,6 @@ namespace
         static longToSetMap* resultMap = new longToSetMap();
         return *resultMap;
     }
-    
-
 
     bool strset_exists(unsigned long id)
     {
@@ -42,7 +39,7 @@ namespace
         return name + "(" + std::to_string(id) + ")";
     }
 
-    string createFuncTemplate(const string& name, unsigned long id, const char *value) {
+    string createFuncTemplate(const string& name, unsigned long id, const char* value) {
         const char* arg = value == nullptr ? "NULL" : value;
 
         return name + "(" + std::to_string(id) + ", " + arg + ")";
@@ -140,35 +137,35 @@ void strset_insert(unsigned long id, const char *value)
         return;
     }
 
-    string toInsert = string(value);
+    if (!strset_exists(id)) {
+        if (debug) {
+            cerr << "strset_insert: called on nonexistant set\n";
+        }
+        return;
+    }
 
-    if (id == strset42() && strset_size(id) == 0) {
-        globalMap()[id].insert(toInsert);
-    } else if (id == strset42() && strset_size(id) != 0) {
+    if (doesSetContainElement(id, value)) {
+        if (debug) {
+            cerr << "strset_insert: set " << id << " already contains element " << value << "\n";
+        }
+        return;
+    }
+
+    if (id == strset42() && strset_size(id) != 0) {
         if (debug) {
             cerr << "strset_insert: illegal call on const set\n";
         }
         return;
     }
 
-    if (!strset_exists(id)) {
-        if (debug) {
-            cerr << "strset_insert: called on nonexistant set\n";
-        }
+    string toInsert = string(value);
 
-        return;
-    }
-    if (doesSetContainElement(id, value)) {
-        if (debug) {
-            cerr << "strset_insert: set " << id << " already contains element " << value << "\n";
-        }
-    } else {
-        globalMap()[id].insert(toInsert);
+    globalMap()[id].insert(toInsert);
 
-        if (debug) {
-            cerr << "strset_insert: set " << id << " element " << value << " inserted\n";
-        }
+    if (debug) {
+        cerr << "strset_insert: set " << id << " element " << value << " inserted\n";
     }
+
 }
 
 
@@ -191,7 +188,9 @@ void strset_remove(unsigned long id, const char *value)
             cerr << "strset_remove: illegal call on const set\n";
         }
         return;
-    } else if (!strset_exists(id)) {
+    }
+
+    if (!strset_exists(id)) {
         if (debug) {
             cerr << "strset_remove: called on nonexistant set\n";
         }
@@ -203,7 +202,6 @@ void strset_remove(unsigned long id, const char *value)
     if (debug) {
         cerr << "strset_remove: element " << value << " removed from set " << id << "\n";
     }
-
 }
 
 
@@ -224,7 +222,7 @@ int strset_test(unsigned long id, const char *value)
     bool answer = doesSetContainElement(id, value);
 
     if (debug) {
-        std::string phrase = answer ? " contains " : " does not contain ";
+        string phrase = answer ? " contains " : " does not contain ";
         cerr << "strset_test: set " << id << phrase << " element " << value << "\n";
     }
 
@@ -272,8 +270,9 @@ int strset_comp(unsigned long id1, unsigned long id2)
         cerr << func << "\n";
     }
 
-    set <string> first = globalMap()[id1];
-    set <string> second = globalMap()[id2];
+    set <string> first, second;
+    first = strset_exists(id1) ? globalMap()[id1] : set <string>();
+    second = strset_exists(id2) ? globalMap()[id2] : set <string>();
 
     bool comp1 = std::lexicographical_compare(first.begin(), first.end(),
                                               second.begin(), second.end());

@@ -1,12 +1,12 @@
 #ifndef JNP2_STRSET_H
 
+#ifdef __cplusplus
+#include <cstddef>
+#else
 #include <stddef.h>
+#endif
 
 #ifdef __cplusplus
-#include <unordered_map>
-#include <set>
-#include <map>
-
 #include <iostream>
 #endif
 

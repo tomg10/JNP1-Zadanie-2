@@ -45,8 +45,8 @@ if [ "$COMP" = "0" ]; then
 
 	echo -e "${G}Compiling source files...${NC}"
 	
-	g++ -Wall -Wextra  -O2 -std=c++17 -c "$set_source" -o "$DIR/strset.o"
-	g++ -Wall -Wextra  -O2 -std=c++17 -c "$const_source" -o "$DIR/strsetconst.o"
+	g++ -Wall -Wextra -DNDEBUG -O2 -std=c++17 -c "$set_source" -o "$DIR/strset.o"
+	g++ -Wall -Wextra -DNDEBUG -O2 -std=c++17 -c "$const_source" -o "$DIR/strsetconst.o"
 	
 
 	if [ "$?" -ne 0 ]; then

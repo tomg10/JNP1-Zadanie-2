@@ -3,6 +3,7 @@
 #include <set>
 #include <algorithm>
 #include <assert.h>
+#include <map>
 
 using std::set;
 using std::make_pair;
@@ -10,7 +11,7 @@ using std::string;
 using std::cerr;
 using std::string;
 
-#ifdef DNDEBUG
+#ifdef NDEBUG
 const bool debug = false;
 #else
 const bool debug = true;
@@ -30,7 +31,7 @@ namespace
         return *resultMap;
     }
     
-    unsigned long firstFreeId = 1;
+
 
     bool strset_exists(unsigned long id)
     {
@@ -51,6 +52,10 @@ namespace
         return name + "(" + std::to_string(id1) + ", " + std::to_string(id2) + ")";
     }
 
+    bool doesSetContainElement(unsigned long id, const char* value) {
+        return (strset_exists(id) && globalMap()[id].find(value) != globalMap()[id].end());
+    }
+
 }
 
 namespace jnp1
@@ -61,9 +66,11 @@ extern "C"
 
 unsigned long strset_new()
 {
+    static unsigned long firstFreeId = 0;
+
     if (debug) {
         cerr << "strset_new()\n";
-    	 assert(!strset_exists(firstFreeId));
+        assert(!strset_exists(firstFreeId));
     }
 
     globalMap().insert(std::make_pair(firstFreeId, set <string>()));
@@ -79,9 +86,8 @@ unsigned long strset_new()
 
 void strset_delete(unsigned long id)
 {
-    string func = createFuncTemplate("strset_delete", id);
-
     if (debug) {
+        string func = createFuncTemplate("strset_delete", id);
         cerr << func << "\n";
     }
 
@@ -105,9 +111,8 @@ void strset_delete(unsigned long id)
 
 size_t strset_size(unsigned long id)
 {
-    string func = createFuncTemplate("strset_size", id);
-
     if (debug) {
+        string func = createFuncTemplate("strset_size", id);
         cerr << func << "\n";
     }
 
@@ -123,18 +128,16 @@ size_t strset_size(unsigned long id)
 
 void strset_insert(unsigned long id, const char *value)
 {
-    string func = createFuncTemplate("strset_insert", id, value);
+    if (debug) {
+        string func = createFuncTemplate("strset_insert", id, value);
+        cerr << func << "\n";
+    }
 
     if (value == nullptr) {
         if (debug) {
-            cerr << func << " illegal NULL value\n";
+            cerr << "strset_insert(): illegal NULL value\n";
         }
-
         return;
-    }
-
-    if (debug) {
-        cerr << func << "\n";
     }
 
     string toInsert = string(value);
@@ -143,19 +146,19 @@ void strset_insert(unsigned long id, const char *value)
         globalMap()[id].insert(toInsert);
     } else if (id == strset42() && strset_size(id) != 0) {
         if (debug) {
-            cerr << func << " illegal call on const set\n";
+            cerr << "strset_insert: illegal call on const set\n";
         }
         return;
     }
 
     if (!strset_exists(id)) {
         if (debug) {
-            cerr << func << " called on nonexistant set\n";
+            cerr << "strset_insert: called on nonexistant set\n";
         }
 
         return;
     }
-    if (strset_test(id, value) == 1) {
+    if (doesSetContainElement(id, value)) {
         if (debug) {
             cerr << "strset_insert: set " << id << " already contains element " << value << "\n";
         }
@@ -171,23 +174,26 @@ void strset_insert(unsigned long id, const char *value)
 
 void strset_remove(unsigned long id, const char *value)
 {
-    string func = createFuncTemplate("strset_remove", id, value);
+    if (debug) {
+        string func = createFuncTemplate("strset_remove", id, value);
+        cerr << func << "\n";
+    }
 
     if (value == nullptr) {
         if (debug) {
-            cerr << func << " illegal NULL value\n";
+            cerr << "strset_remove : illegal NULL value\n";
         }
         return;
     }
 
     if (id == strset42()) {
         if (debug) {
-            cerr << func << " illegal call on const set\n";
+            cerr << "strset_remove: illegal call on const set\n";
         }
         return;
     } else if (!strset_exists(id)) {
         if (debug) {
-            cerr << func << " called on nonexistant set\n";
+            cerr << "strset_remove: called on nonexistant set\n";
         }
         return;
     }
@@ -203,20 +209,19 @@ void strset_remove(unsigned long id, const char *value)
 
 int strset_test(unsigned long id, const char *value)
 {
-    string func = createFuncTemplate("strset_test", id, value);
+    if (debug) {
+        string func = createFuncTemplate("strset_test", id, value);
+        cerr << func << "\n";
+    }
 
     if (value == nullptr) {
         if (debug) {
-            cerr << func << " illegal NULL value\n";
+            cerr << "strset_test: illegal NULL value\n";
         }
         return 0;
     }
 
-    if (debug) {
-        cerr << func << "\n";
-    }
-
-    bool answer = (strset_exists(id) && globalMap()[id].find(value) != globalMap()[id].end());
+    bool answer = doesSetContainElement(id, value);
 
     if (debug) {
         std::string phrase = answer ? " contains " : " does not contain ";
@@ -229,11 +234,16 @@ int strset_test(unsigned long id, const char *value)
 
 void strset_clear(unsigned long id)
 {
-    string func = createFuncTemplate("strset_clear", id);
+
+    if (debug) {
+        string func = createFuncTemplate("strset_clear", id);
+        cerr << func << "\n";
+    }
+
 
     if (id == strset42()) {
         if (debug) {
-            cerr << func << " illegal call on const set\n";
+            cerr << "strset_clear: illegal call on const set\n";
         }
 
         return;
@@ -241,7 +251,7 @@ void strset_clear(unsigned long id)
 
     if (!strset_exists(id)) {
         if (debug) {
-            cerr << func << " called on nonexistant set\n";
+            cerr << "strset_clear: called on nonexistant set\n";
         }
 
         return;
@@ -257,9 +267,8 @@ void strset_clear(unsigned long id)
 
 int strset_comp(unsigned long id1, unsigned long id2)
 {
-    string func = createFuncTemplate("strset_comp", id1, id2);
-
     if (debug) {
+        string func = createFuncTemplate("strset_comp", id1, id2);
         cerr << func << "\n";
     }
 
@@ -281,7 +290,6 @@ int strset_comp(unsigned long id1, unsigned long id2)
     } else if (!comp1) {
         answer = 1;
         grammar = "greater than";
-
     } else {
         answer = -1;
         grammar = "less than";
@@ -293,42 +301,6 @@ int strset_comp(unsigned long id1, unsigned long id2)
     }
 
     return answer;
-/*  size_t size1 = strset_size(id1);
-    size_t size2 = strset_size(id2);
-
-
-
-    if (size1 == 0 && size2 == 0)
-    {
-        return 0;
-    } else if (size1 == 0 || size2 == 0)
-    {
-        return size1 == 0 ? -1 : 1;
-    }
-
-    auto it1 = globalMap()[id1].begin();
-    auto it2 = globalMap()[id2].begin();
-    auto it1End = globalMap()[id1].end();
-    auto it2End = globalMap()[id2].end();
-
-    while (it1 != it1End && it2 != it2End) {
-        auto compare = (*it1).compare(*it2);
-        if (compare == 0) {
-            it1++;
-            it2++;
-            continue;
-        }
-
-
-        return compare < 0 ? -1 : 1;
-    }
-
-    if (size1 == size2) {
-        return 0;
-    } else {
-        return size1 < size2 ? -1 : 1;
-    }
-*/
 }
 
 }

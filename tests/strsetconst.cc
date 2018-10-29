@@ -1,7 +1,7 @@
 #include "strsetconst.h"
 #include "strset.h"
 
-#ifdef DNDEBUG
+#ifdef NDEBUG
 const bool debug = false;
 #else
 const bool debug = true;
@@ -10,12 +10,14 @@ const bool debug = true;
 using std::cerr;
 
 namespace {
-    bool wasSetCreated = false;
-    unsigned long id;
+
 }
 
 namespace jnp1 {
     unsigned long strset42() {
+
+        static bool wasSetCreated = false;
+        static unsigned long id;
 
         if (!wasSetCreated && debug) {
             cerr << "strsetconst init invoked\n";

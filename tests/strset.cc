@@ -63,9 +63,8 @@ unsigned long strset_new()
 {
     if (debug) {
         cerr << "strset_new()\n";
+    	 assert(!strset_exists(firstFreeId));
     }
-
-    assert(!strset_exists(firstFreeId));
 
     globalMap().insert(std::make_pair(firstFreeId, set <string>()));
     firstFreeId++;

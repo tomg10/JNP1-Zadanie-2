@@ -1,6 +1,8 @@
 #include "strset.h"
 #include "strsetconst.h"
 #include <set>
+#include <algorithm>
+#include <assert.h>
 
 using std::set;
 using std::make_pair;
@@ -27,9 +29,7 @@ namespace
         static longToSetMap* resultMap = new longToSetMap();
         return *resultMap;
     }
-
-
-    //std::map<unsigned long, std::set<std::string>> idsToSets;
+    
     unsigned long firstFreeId = 1;
 
     bool strset_exists(unsigned long id)
@@ -57,11 +57,15 @@ namespace jnp1
 {
 extern "C"
 {
+
+
 unsigned long strset_new()
 {
     if (debug) {
         cerr << "strset_new()\n";
     }
+
+    assert(!strset_exists(firstFreeId));
 
     globalMap().insert(std::make_pair(firstFreeId, set <string>()));
     firstFreeId++;
@@ -217,7 +221,6 @@ int strset_test(unsigned long id, const char *value)
 
     if (debug) {
         std::string phrase = answer ? " contains " : " does not contain ";
-
         cerr << "strset_test: set " << id << phrase << " element " << value << "\n";
     }
 
@@ -261,7 +264,37 @@ int strset_comp(unsigned long id1, unsigned long id2)
         cerr << func << "\n";
     }
 
-    size_t size1 = strset_size(id1);
+    set <string> first = globalMap()[id1];
+    set <string> second = globalMap()[id2];
+
+    bool comp1 = std::lexicographical_compare(first.begin(), first.end(),
+                                              second.begin(), second.end());
+
+    bool comp2 = std::lexicographical_compare(second.begin(), second.end(),
+                                              first.begin(), first.end());
+
+    int answer;
+    string grammar;
+
+    if (!comp1 and !comp2) {
+        answer = 0;
+        grammar = "equal to";
+    } else if (!comp1) {
+        answer = 1;
+        grammar = "greater than";
+
+    } else {
+        answer = -1;
+        grammar = "less than";
+    }
+
+    if (debug) {
+        cerr << "strset_comp: set " << id1 << " is lexicographically " <<
+            grammar << " set " << id2 << "\n";
+    }
+
+    return answer;
+/*  size_t size1 = strset_size(id1);
     size_t size2 = strset_size(id2);
 
 
@@ -296,7 +329,7 @@ int strset_comp(unsigned long id1, unsigned long id2)
     } else {
         return size1 < size2 ? -1 : 1;
     }
-
+*/
 }
 
 }
